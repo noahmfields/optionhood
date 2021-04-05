@@ -6,12 +6,6 @@ import db
 import time
 import datetime
 
-def cinput():
-    i = input(config.submenu_prompt)
-    if i == 'exit':
-        return('return')
-    return(i)
-
 def get_options_table(ticker, strike_depth, number_of_expirations):
     #UPPER CASE TICKER
     ticker = ticker.upper()
