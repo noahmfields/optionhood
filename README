@@ -1,0 +1,11 @@
+REQUIRES THE FOLLOWING PIP3 PACKAGES
+urwid
+robin_stocks
+pandas
+tmuxp
+
+Please install with pip3 for python3, either globally or to a new virtual environment.
+
+You must edit the RENAME-TO-config.py file to include your Robinhood credentials and then rename the file to config.py
+
+You do not need to install any database server. Optionhood uses sqlite.
