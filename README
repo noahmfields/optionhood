@@ -4,17 +4,22 @@ robin_stocks
 pandas
 tmuxp
 
+You will also need tmuxinator and tmuxp installed on your system.
+tmuxp is a project that loads tmux yaml files to automatically create a custom tmuxinator window.
+
 How to install optionhood:
 1) git clone https://github.com/noahmfields/optionhood.git
 2) cd optionhood
-3) pip3 install .
+3) pip3 install -r requirements.txt
 4) You must edit the RENAME-TO-config.py file to include your Robinhood credentials
 5) Rename RENAME-TO-config.py to config.py
 
-How to start Optionhood:
-1) In a shell, cd to the cloned optionhood directory (i.e., ~/optionhood)
-2) ./optionhood.sh
+ON UBUNTU (probably other Debian distros as well):
+1) sudo apt install tmux tmuxp
 
-This project was written on/for an Ubuntu 20.04 system, but could very well work just fine on OS X and Windows. The tmuxp package may not be as friendly on a non-linux system, I haven't tried it.
+
+This project was written on/for an Ubuntu 20.04 system. I don't think it will work on OS X or Windows unless you can get both tmux and tmuxp installed on those systems.
 
 I run Optionhood on a DigitalOcean node to have faster access to the Robinhood API.
+
+I have the cheapest DO node setup for this purpose, which is more than enough resources, and then you can access it from anywhere at anytime.
