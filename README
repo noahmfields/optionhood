@@ -4,7 +4,7 @@ robin_stocks
 pandas
 tmuxp
 
-You will also need tmuxinator and tmuxp installed on your system.
+You will also need tmux and tmuxp installed on your system. As far as I know this will only work on linux.
 tmuxp is a project that loads tmux yaml files to automatically create a custom tmuxinator window.
 
 How to install optionhood:
