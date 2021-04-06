@@ -1,14 +1,12 @@
 import sqlite3
 import datetime
 import pytz
-import config
-import robin_stocks.robinhood as robin_stocks
-import pandas as pd
-import time
-import config
 import sys
 import os
-
+import time
+import config
+import robin_stocks.robinhood as rh
+import pandas as pd
 
 def est_date_time_stamp():
     return datetime.datetime.now(tz=pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
@@ -16,46 +14,13 @@ def est_date_time_stamp():
 def est_time_stamp():
     return datetime.datetime.now(tz=pytz.timezone('US/Eastern')).strftime("%H:%M:%S")
 
+def extract_option_id(url):
+    oid = url.split('/')[5]
+    return oid
+
 def db_connection():
     con = sqlite3.connect('.optionhood.db')
     return con
-
-def create_loggedin_table():
-    con = db_connection()
-    cur = con.cursor()
-    
-    query = 'CREATE TABLE IF NOT EXISTS loggedin (id INT DEFAULT 1, loggedin BOOL DEFAULT 0, PRIMARY KEY (id));' 
-    
-    cur.execute(query)
-    con.commit()
-    cur.close()
-    con.close()
-    
-def set_loggedin_status(bool_status):
-    con = db_connection()
-    cur = con.cursor()
-    
-    query = 'INSERT INTO loggedin (id, loggedin) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET loggedin=?;'
-    
-    values = (1, int(bool_status), int(bool_status))
-    cur.execute(query, values)
-    con.commit()
-    cur.close()
-    con.close()
-    
-def get_loggedin_status():
-    con = db_connection()
-    cur = con.cursor()
-    
-    query = 'SELECT loggedin FROM loggedin WHERE id=1;'
-    
-    cur.execute(query)
-    res = cur.fetchall()
-    con.commit()
-    cur.close()
-    con.close()
-    
-    return(res)
 
 def create_orders_table():
     con = db_connection()
@@ -100,17 +65,6 @@ def drop_positions_table():
     con.commit()
     cur.close()
     con.close()
-    
-def drop_loggedin_table():
-    con = db_connection()
-    cur = con.cursor()
-
-    query = "DROP TABLE IF EXISTS loggedin;"
-
-    cur.execute(query)
-    con.commit()
-    cur.close()
-    con.close()
 
 def drop_account_table():
     con = db_connection()
@@ -138,13 +92,11 @@ def recreate_all_tables():
     recreate_orders_table()
     recreate_positions_table()
     recreate_account_table()
-    recreate_loggedin_table()
     
 def create_all_tables():
     create_orders_table()
     create_positions_table() 
-    create_account_table()  
-    create_loggedin_table()
+    create_account_table()
     
 def recreate_orders_table():
     drop_orders_table()
@@ -157,14 +109,10 @@ def recreate_positions_table():
 def recreate_account_table():
     drop_account_table()
     create_account_table()
-    
-def recreate_loggedin_table():
-    drop_loggedin_table()
-    create_loggedin_table()
-    
+
 def update_account():
-    buying_power = robin_stocks.profiles.load_account_profile()['buying_power']
-    r = robin_stocks.account.get_day_trades()
+    buying_power = rh.profiles.load_account_profile()['buying_power']
+    r = rh.account.get_day_trades()
     day_trades = len(r['option_day_trades']) + len(r['equity_day_trades'])
     
     equity_expiries = ''
@@ -188,41 +136,9 @@ def update_account():
     con.commit()
     cur.close()
     con.close()
-    
-def update_account():
-    buying_power = robin_stocks.profiles.load_account_profile()['buying_power']
-    r = robin_stocks.account.get_day_trades()
-    day_trades = len(r['option_day_trades']) + len(r['equity_day_trades'])
-    
-    equity_expiries = ''
-    for t in r['equity_day_trades']:
-        equity_expiries = equity_expiries + t['expiry_date'].split('-')[2] + ' '
-    
-    option_expiries = ''
-    for t in r['option_day_trades']:
-        option_expiries = option_expiries + t['expiry_date'].split('-')[2] + ' '
-    
-    now = time.time()
-    insert_data = (1, buying_power, day_trades, now, equity_expiries, option_expiries, buying_power, day_trades, now, equity_expiries, option_expiries)
-
-    #slate all records for deletion 
-    con = db_connection()
-    cur = con.cursor()
-    
-    query = 'INSERT INTO account (id, buying_power, day_trades, epoch_update, equity_expiries, option_expiries) VALUES (?,?,?,?,?,?) ON CONFLICT (id) DO UPDATE SET (buying_power, day_trades, epoch_update, equity_expiries, option_expiries) = (?,?,?,?,?);'
-    
-    cur.execute(query, insert_data)
-    con.commit()
-    cur.close()
-    con.close()
-    
-
-def extract_option_id(url):
-    oid = url.split('/')[5]
-    return oid
 
 def update_orders():
-    res = robin_stocks.orders.get_all_open_option_orders()
+    res = rh.orders.get_all_open_option_orders()
     res = sorted(res, key=lambda i: i['id'])
     local_id_counter = 1
 
@@ -344,28 +260,28 @@ def update_instrument_data():
 
         if order[1] != None:
             instr_id = extract_option_id(order[1])
-            r1 = robin_stocks.options.get_option_instrument_data_by_id(instr_id)
+            r1 = rh.options.get_option_instrument_data_by_id(instr_id)
             strike1 = r1['strike_price']
             exp1 = r1['expiration_date']
             call_put1 = r1['type']
 
         if order[3] != None:       
             instr_id = extract_option_id(order[3])
-            r2 = robin_stocks.options.get_option_instrument_data_by_id(instr_id)
+            r2 = rh.options.get_option_instrument_data_by_id(instr_id)
             strike1 = r2['strike_price']
             exp1 = r2['expiration_date']
             call_put1 = r2['type']
 
         if order[4] != None:
             instr_id = extract_option_id(order[4])
-            r3 = robin_stocks.options.get_option_instrument_data_by_id(instr_id)
+            r3 = rh.options.get_option_instrument_data_by_id(instr_id)
             strike1 = r3['strike_price']
             exp1 = r3['expiration_date']
             call_put1 = r3['type']
 
         if order[5] != None:
             instr_id = extract_option_id(order[5])
-            r4 = robin_stocks.options.get_option_instrument_data_by_id(instr_id)
+            r4 = rh.options.get_option_instrument_data_by_id(instr_id)
             strike1 =r4['strike_price']
             exp1 = r4['expiration_date']
             call_put1 = r4['type']
@@ -416,28 +332,28 @@ def update_orders_market_data():
         leg_4_ask_price = None
         
         if order[1] != None:
-            mktdata = robin_stocks.options.get_option_market_data_by_id(order[1])
+            mktdata = rh.options.get_option_market_data_by_id(order[1])
             leg_1_bid_size = mktdata[0]['bid_size']
             leg_1_bid_price = mktdata[0]['bid_price']
             leg_1_ask_size = mktdata[0]['ask_size']
             leg_1_ask_price = mktdata[0]['ask_price']
             
         if order[2] != None:
-            mktdata = robin_stocks.options.get_option_market_data_by_id(order[2])
+            mktdata = rh.options.get_option_market_data_by_id(order[2])
             leg_2_bid_size = mktdata[0]['bid_size']
             leg_2_bid_price = mktdata[0]['bid_price']
             leg_2_ask_size = mktdata[0]['ask_size']
             leg_2_ask_price = mktdata[0]['ask_price']
             
         if order[3] != None:
-            mktdata = robin_stocks.options.get_option_market_data_by_id(order[3])
+            mktdata = rh.options.get_option_market_data_by_id(order[3])
             leg_3_bid_size = mktdata[0]['bid_size']
             leg_3_bid_price = mktdata[0]['bid_price']
             leg_3_ask_size = mktdata[0]['ask_size']
             leg_3_ask_price = mktdata[0]['ask_price']
             
         if order[4] != None:
-            mktdata = robin_stocks.options.get_option_market_data_by_id(order[4])
+            mktdata = rh.options.get_option_market_data_by_id(order[4])
             leg_4_bid_size = mktdata[0]['bid_size']
             leg_4_bid_price = mktdata[0]['bid_price']
             leg_4_ask_size = mktdata[0]['ask_size']
@@ -450,7 +366,6 @@ def update_orders_market_data():
         cur.execute(q, row)
         con.commit()
 
-
 def update_underlying_market_data():
     #CONNECT TO DB
     con = db_connection()
@@ -462,7 +377,7 @@ def update_underlying_market_data():
 
     for row in rows:
         ticker = row[0]
-        res = robin_stocks.stocks.get_latest_price(ticker)
+        res = rh.stocks.get_latest_price(ticker)
         insert_data = (round(float(res[0]), 2), row[1])
 
         q = 'UPDATE positions SET underlying_price=? WHERE l_option_id=?;'
@@ -475,18 +390,18 @@ def update_underlying_market_data():
     con.close()
 
 def update_uncapped_shorts():
-
     con = db_connection()
     cur = con.cursor()
 
     q = 'SELECT s_option_id, l_option_id FROM positions;'
+
     cur.execute(q)
     short_option_ids = cur.fetchall()
 
     for sid in short_option_ids:
         try:
             #INSTRUMENT DATA HTTP REQUEST
-            instrument_info = robin_stocks.options.get_option_instrument_data_by_id(sid[0])
+            instrument_info = rh.options.get_option_instrument_data_by_id(sid[0])
 
             #INSTRUMENT DATA
             underlying = instrument_info['chain_symbol']
@@ -511,7 +426,6 @@ def update_uncapped_shorts():
 
     cur.close()
     con.close()
-    
 
 def update_position_info():
     #CONNECT TO DB
@@ -519,7 +433,7 @@ def update_position_info():
     cur = con.cursor()
 
     #GET CURRENT POSITIONS
-    positions = robin_stocks.options.get_open_option_positions()
+    positions = rh.options.get_open_option_positions()
     positions = sorted(positions, key=lambda i: (i['type'], i['option_id']))
     local_id_counter = 1
 
@@ -545,7 +459,7 @@ def update_position_info():
         l_longshort = option['type']
 
         #INSTRUMENT DATA HTTP REQUEST
-        instrument_info = robin_stocks.options.get_option_instrument_data_by_id(l_option_id)
+        instrument_info = rh.options.get_option_instrument_data_by_id(l_option_id)
 
         #INSTRUMENT DATA
         l_expiration = instrument_info['expiration_date']
@@ -583,7 +497,7 @@ def update_position_info():
         longshort = option['type']
 
         #INSTRUMENT DATA HTTP REQUEST
-        instrument_info = robin_stocks.options.get_option_instrument_data_by_id(option_id)
+        instrument_info = rh.options.get_option_instrument_data_by_id(option_id)
 
         #INSTRUMENT DATA
         expiration = instrument_info['expiration_date']
@@ -617,7 +531,7 @@ def update_spread_cap_ids():
         ticker     = row[5]
         expiration = row[7]
         callorput  = row[9]
-        res = robin_stocks.options.find_options_by_expiration(ticker, expiration, optionType=callorput)
+        res = rh.options.find_options_by_expiration(ticker, expiration, optionType=callorput)
 
         df = pd.DataFrame(res)
         df['strike_price'] = df['strike_price'].astype(float)
@@ -654,7 +568,7 @@ def update_long_position_market_data():
 
     for oid in option_ids:
         #MARKET DATA HTTP REQUEST
-        market_data = robin_stocks.options.get_option_market_data_by_id(oid[0])
+        market_data = rh.options.get_option_market_data_by_id(oid[0])
         market_data = market_data[0]
         #MARKET DATA
         try:
@@ -681,9 +595,7 @@ def update_long_position_market_data():
     cur.close()
     con.close()    
     
-
 def update_short_position_market_data():
-
     #CONNECT TO DB
     con = db_connection()
     cur = con.cursor()
@@ -694,7 +606,7 @@ def update_short_position_market_data():
 
     for oid in option_ids:
         #MARKET DATA HTTP REQUEST
-        market_data = robin_stocks.options.get_option_market_data_by_id(oid[1])
+        market_data = rh.options.get_option_market_data_by_id(oid[1])
         market_data = market_data[0]
         #MARKET DATA
         try:
@@ -736,38 +648,25 @@ def set_positions_epoch_time(l_option_id, epoch_field):
     con.close()
     
 if __name__ == '__main__':
-
     create_all_tables()
-    
+    rh.login(config.username, config.password)
     home = os.path.expanduser('~')
 
     while True:
         if not os.path.exists(home + '/.tokens/robinhood.pickle'):
             print("Exiting. Not logged in.")
             sys.exit()
-        
-        robin_stocks.login(config.username, config.password)
-        print("UPDATE ACCOUNT")
+
+        print("Updating account information at " est_date_time_stamp + ".")
         update_account()
-
-        print("UPDATE POSITION INFO")
         update_position_info()
-        print("UPDATE SPREAD CAP IDS")
         update_spread_cap_ids()
-        print("UPDATE UNCAPPED SHORTS")
         update_uncapped_shorts()
-        print("UPDATE LONG POSITION MARKET DATA")
         update_long_position_market_data()
-        print("UPDATE SHORT POSITION MARKET DATA")
         update_short_position_market_data()
-        print("UPDATE UNDERLYING MARKET DATA")
         update_underlying_market_data()
-
-        print("UPDATE ORDERS")
         update_orders()
-        print("UPDATE ORDERS MARKET DATA")
         update_orders_market_data()
-        print("UPDATE INSTRUMENT DATA")
         update_instrument_data()
 
         time.sleep(config.data_refresh)

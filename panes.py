@@ -1,7 +1,6 @@
 import urwid
 import sys
 import time
-
 import config
 import db
 

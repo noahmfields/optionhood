@@ -1,5 +1,5 @@
 import cmd
-import robin_stocks.robinhood as robin_stocks
+import robin_stocks.robinhood as rh
 import config
 import os
 import db
@@ -11,15 +11,15 @@ def get_options_table(ticker, strike_depth, number_of_expirations):
     ticker = ticker.upper()
     
     #SELECT LIST OF EXPIRATION DATES FROM THE NEAREST CHAIN
-    chains = robin_stocks.options.get_chains(ticker)
+    chains = rh.options.get_chains(ticker)
     nearest_chain = chains['expiration_dates'][0]
     valid_chains = chains['expiration_dates'][0:number_of_expirations]
     
     #GET RELEVANT STRIKES
-    current_price = robin_stocks.stocks.get_latest_price(ticker)
-    l = robin_stocks.options.find_tradable_options(ticker, expirationDate=nearest_chain, optionType='call')
+    current_price = rh.stocks.get_latest_price(ticker)
+    l = rh.options.find_tradable_options(ticker, expirationDate=nearest_chain, optionType='call')
     sorted_l = sorted(l, key=lambda k: float(k['strike_price']))
-    current_price = float(robin_stocks.stocks.get_latest_price(ticker)[0])
+    current_price = float(rh.stocks.get_latest_price(ticker)[0])
     index_below_current_price = 0
     counter = 0
     for i in sorted_l:
@@ -47,12 +47,12 @@ def get_options_table(ticker, strike_depth, number_of_expirations):
         strike_row = []
         for exp_date in valid_chains:
             try:
-                call = robin_stocks.options.get_option_market_data(ticker, exp_date, strike, 'call')[0][0]['mark_price']
+                call = rh.options.get_option_market_data(ticker, exp_date, strike, 'call')[0][0]['mark_price']
             except:
                 #print('EXCEPTION CALL')
                 call = ''
             try:
-                put = robin_stocks.options.get_option_market_data(ticker, exp_date, strike, 'put')[0][0]['mark_price']
+                put = rh.options.get_option_market_data(ticker, exp_date, strike, 'put')[0][0]['mark_price']
             except:
                 #print('EXCEPTION PUT')
                 put = ''
@@ -131,7 +131,7 @@ class OptionHoodCmd(cmd.Cmd):
             os.remove(home + '/.tokens/robinhood.pickle')
         except:
             print('Pickle login already removed...')
-        robin_stocks.login(config.username, config.password)
+        rh.login(config.username, config.password)
         
     def do_start(self, args):
         """Starts data requests from Robinhood. You will see this activity in the left bottom pane."""
@@ -156,7 +156,7 @@ class OptionHoodCmd(cmd.Cmd):
         i = input(config.submenu_prompt)
         if i =='all':
             print('Cancelling all orders...')
-            robin_stocks.cancel_all_option_orders()
+            rh.cancel_all_option_orders()
             return
 
         con = db.db_connection()
@@ -174,7 +174,7 @@ class OptionHoodCmd(cmd.Cmd):
             print('Attempting to cancel order # ' + str(i))
             cur.execute(q, (i,))
             res = cur.fetchall()
-            robin_stocks.orders.cancel_option_order(res[0][0])
+            rh.orders.cancel_option_order(res[0][0])
             print('Success.')
         except:
             print('Failure.')
@@ -192,7 +192,7 @@ class OptionHoodCmd(cmd.Cmd):
         res = input(config.submenu_prompt)
         res = res.split()
 
-        res = robin_stocks.orders.order_buy_option_limit('open', 'debit', res[5], res[1], res[0], res[4], res[3], optionType=res[2], timeInForce='gtc', jsonify=True)
+        res = rh.orders.order_buy_option_limit('open', 'debit', res[5], res[1], res[0], res[4], res[3], optionType=res[2], timeInForce='gtc', jsonify=True)
         print(res)
         return
 
@@ -202,7 +202,7 @@ class OptionHoodCmd(cmd.Cmd):
         print('open/close quantity symbol call/put strike expiration limit')
         res = input(config.submenu_prompt)
         res = res.split()
-        res = robin_stocks.orders.order_sell_option_limit(res[0], 'credit', res[6], res[2], res[1], res[5], res[4], optionType=res[3], timeInForce='gtc', jsonify=True)
+        res = rh.orders.order_sell_option_limit(res[0], 'credit', res[6], res[2], res[1], res[5], res[4], optionType=res[3], timeInForce='gtc', jsonify=True)
         print(res)
         return
 
@@ -229,7 +229,7 @@ class OptionHoodCmd(cmd.Cmd):
         strike = res[0][2]
         callput = res[0][3]
 
-        r = robin_stocks.orders.order_sell_option_limit('open', 'credit', limit, ticker, qty, exp, strike, optionType=callput, timeInForce='gtc', jsonify=True)
+        r = rh.orders.order_sell_option_limit('open', 'credit', limit, ticker, qty, exp, strike, optionType=callput, timeInForce='gtc', jsonify=True)
         return
     
     def do_increase(self, args):
@@ -255,7 +255,7 @@ class OptionHoodCmd(cmd.Cmd):
         strike = res[0][2]
         callput = res[0][3]
 
-        r = robin_stocks.orders.order_buy_option_limit('open', 'debit', limit, ticker, qty, exp, strike, optionType=callput, timeInForce='gtc', jsonify=True)
+        r = rh.orders.order_buy_option_limit('open', 'debit', limit, ticker, qty, exp, strike, optionType=callput, timeInForce='gtc', jsonify=True)
 
         print(r)
         return
@@ -283,7 +283,7 @@ class OptionHoodCmd(cmd.Cmd):
         strike = res[0][2]
         callput = res[0][3]
 
-        r = robin_stocks.orders.order_sell_option_limit('close', 'credit', limit, ticker, qty, exp, strike, optionType=callput, timeInForce='gtc', jsonify=True)
+        r = rh.orders.order_sell_option_limit('close', 'credit', limit, ticker, qty, exp, strike, optionType=callput, timeInForce='gtc', jsonify=True)
 
         print(r)
         return
@@ -321,7 +321,7 @@ class OptionHoodCmd(cmd.Cmd):
         spread = []
         spread.append({'expirationDate': res[0][1], 'strike': res[0][2], 'optionType': res[0][3], 'effect': 'close', 'action': 'sell'})
         spread.append({'expirationDate': res[0][4], 'strike': res[0][5], 'optionType': res[0][6], 'effect': 'close', 'action': 'buy'})
-        r = robin_stocks.orders.order_option_spread('credit', limit, ticker, qty, spread, timeInForce='gtc', jsonify=True)
+        r = rh.orders.order_option_spread('credit', limit, ticker, qty, spread, timeInForce='gtc', jsonify=True)
         print(r)
     
     def do_atmbuy(self, args):
@@ -336,7 +336,7 @@ class OptionHoodCmd(cmd.Cmd):
         
         ticker = ticker.upper()
         
-        chains = robin_stocks.options.get_chains(ticker)['expiration_dates']
+        chains = rh.options.get_chains(ticker)['expiration_dates']
         s = ''
         i = 0
         for c in chains:
@@ -360,10 +360,9 @@ class OptionHoodCmd(cmd.Cmd):
 
         print("Maximum amount to spend: $$$.$$")
         max_spend = input(config.submenu_prompt)
-        
 
 if __name__ == '__main__':
-    robin_stocks.login(config.username, config.password)
+    rh.login(config.username, config.password)
     
     os.system('tmux send-keys -t2 python3\ db.py Enter')
     
