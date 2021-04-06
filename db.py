@@ -657,7 +657,7 @@ if __name__ == '__main__':
             print("Exiting. Not logged in.")
             sys.exit()
 
-        print("Updating account information at " est_date_time_stamp + ".")
+        print("Updating account information at " + est_date_time_stamp() + ".")
         update_account()
         update_position_info()
         update_spread_cap_ids()
