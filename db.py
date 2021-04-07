@@ -8,7 +8,7 @@ import config
 import robin_stocks.robinhood as rh
 import pandas as pd
 
-DEFAULT_DATABASE_PATH = os.path.join(config.ROOT_DIR, 'optionhood.sqlite3')
+DEFAULT_DATABASE_PATH = os.path.join(config.ROOT_DIR, '.optionhood.sqlite3')
 
 def est_date_time_stamp():
     return datetime.datetime.now(tz=pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")

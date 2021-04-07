@@ -2,3 +2,5 @@
 /.ipynb_checkpoints/*
 optionhood.sqlite3
 config.py
+.optionhood.sqlite3
+.optionhood.sqlite3-journal
