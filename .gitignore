@@ -1,6 +1,4 @@
 /__pycache__/*
 /.ipynb_checkpoints/*
-.optionhood.db
+optionhood.sqlite3
 config.py
-
-

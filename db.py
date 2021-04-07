@@ -8,6 +8,8 @@ import config
 import robin_stocks.robinhood as rh
 import pandas as pd
 
+DEFAULT_DATABASE_PATH = os.path.join(config.ROOT_DIR, 'optionhood.sqlite3')
+
 def est_date_time_stamp():
     return datetime.datetime.now(tz=pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -18,8 +20,8 @@ def extract_option_id(url):
     oid = url.split('/')[5]
     return oid
 
-def db_connection():
-    con = sqlite3.connect('.optionhood.db')
+def db_connection(db_path=DEFAULT_DATABASE_PATH):
+    con = sqlite3.connect(db_path)
     return con
 
 def create_orders_table():
@@ -649,7 +651,7 @@ def set_positions_epoch_time(l_option_id, epoch_field):
     
 if __name__ == '__main__':
     create_all_tables()
-    rh.login(config.username, config.password)
+    rh.login(config.USERNAME, config.PASSWORD)
     home = os.path.expanduser('~')
 
     while True:
@@ -669,5 +671,5 @@ if __name__ == '__main__':
         update_orders_market_data()
         update_instrument_data()
 
-        time.sleep(config.data_refresh)
+        time.sleep(config.RH_REQUEST_INTERVAL)
         

@@ -131,7 +131,7 @@ class OptionHoodCmd(cmd.Cmd):
             os.remove(home + '/.tokens/robinhood.pickle')
         except:
             print('Pickle login already removed...')
-        rh.login(config.username, config.password)
+        rh.login(config.USERNAME, config.PASSWORD)
         
     def do_start(self, args):
         """Starts data requests from Robinhood. You will see this activity in the left bottom pane."""
@@ -362,7 +362,7 @@ class OptionHoodCmd(cmd.Cmd):
         max_spend = input(config.submenu_prompt)
 
 if __name__ == '__main__':
-    rh.login(config.username, config.password)
+    rh.login(config.USERNAME, config.PASSWORD)
     
     os.system('tmux send-keys -t2 python3\ db.py Enter')
     

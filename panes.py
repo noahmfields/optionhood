@@ -17,12 +17,14 @@ palette = [
     ('ah', 'yellow,bold', ''),
     ('sh', 'light blue', 'white')]
 
-def account():
+def account_line():
     act_line = []
     
     con = db.db_connection()
     cur = con.cursor()
+
     q = 'SELECT buying_power, epoch_update, day_trades, equity_expiries, option_expiries FROM account WHERE id=1;'
+
     cur.execute(q)
     d = cur.fetchall()
 
@@ -44,7 +46,7 @@ def account():
         act_line.append(('ac', option_expiries))
         
     time_dif = time.time() - last_update
-    if time_dif < (config.data_refresh):
+    if time_dif < (config.RH_REQUEST_INTERVAL):
         act_line.append(('bid', '  \u2589'))
     else:
         act_line.append(('ask', '  \u2589'))
@@ -84,7 +86,7 @@ class Panel:
     def refresh(self, _loop, _data):
         self.main_loop.draw_screen()
         self.v_padding.base_widget.set_text(self.data_routine())
-        self.main_loop.set_alarm_in(config.pane_refresh, self.refresh)
+        self.main_loop.set_alarm_in(config.TMUX_REFRESH_INTERVAL, self.refresh)
 
     def handle_input(self, key):
         if key == 'Q' or key == 'q':
@@ -92,7 +94,7 @@ class Panel:
 
     def positions(self):
         try:
-            updates = account()
+            updates = account_line()
 
             updates.append(('headers', 'ID\t'.expandtabs(5)))
             updates.append(('headers', 'TICKER\t'.expandtabs(8)))
@@ -118,7 +120,9 @@ class Panel:
             #data processing
             con = db.db_connection()
             cur = con.cursor()
+
             query = "SELECT local_id, l_underlying, l_callput, l_expiration, l_strike_price, l_quantity, l_average_price, l_bid_price, l_bid_size, l_ask_price, l_ask_size, l_implied_volatility, l_above_tick, l_below_tick, l_cutoff_price, s_quantity, s_average_price, s_bid_price, s_bid_size, s_ask_price, s_ask_size, s_above_tick, s_below_tick, s_cutoff_price, underlying_price, epoch_update_underlying_market_data, epoch_update_uncapped_shorts, epoch_update_long_position_market_data, epoch_update_short_position_market_data, s_strike_price FROM positions;"
+            
             cur.execute(query)
             rows=cur.fetchall()
 
@@ -272,7 +276,7 @@ class Panel:
                 updates.append(('main', s_mid.expandtabs(8)))
                 updates.append(('main', s_high.expandtabs(8)))
             
-                signal = config.data_refresh - 1
+                signal = config.RH_REQUEST_INTERVAL - 1
                 now = time.time()
                 if (now - row[25]) > signal:
                     updates.append(('ask', ' \u2589'))
@@ -429,7 +433,7 @@ class Panel:
                 updates.append(('main', open_strat.expandtabs(13)))
                 updates.append(('main', close_strat.expandtabs(13)))
 
-                signal = config.data_refresh
+                signal = config.RH_REQUEST_INTERVAL
                 now = time.time()
                 if (now - row[24]) > signal:
                     updates.append(('ask', '\u2589'))
