@@ -1,14 +1,12 @@
 session_name: optionhood 
 windows:
   - window_name: main
-    layout: 8497,186x45,0,0[186x11,0,0,1,186x13,0,12,2,186x19,0,26{44x19,0,26,3,141x19,45,26,4}]
+    layout: 79dc,204x50,0,0[204x20,0,0,5,204x11,0,21,6,204x17,0,33,7]
     panes:
       - shell_command:
          - python3 panes.py positions
       - shell_command:
          - python3 panes.py orders
-      - shell_command:
-         - clear
       - shell_command:
          - clear
          - python3 commands.py

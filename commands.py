@@ -2,6 +2,7 @@ import cmd
 import robin_stocks.robinhood as rh
 import config
 import os
+import subprocess
 import db
 import time
 import datetime
@@ -135,16 +136,28 @@ class OptionHoodCmd(cmd.Cmd):
         
     def do_start(self, args):
         """Starts data requests from Robinhood. You will see this activity in the left bottom pane."""
-        os.system('tmux send-keys -t2 C-c Enter')
-        os.system('tmux send-keys -t2 python3\ db.py\ cancelme Enter')
-        # START A PRCOESS FOR EACH DATA COLLECTION FUNCTION IN THE BAKCGOUND
-        # WITH THEIR OWN LOOPS
-        # 
+        #os.system('tmux send-keys -t2 C-c Enter')
+        #os.system('tmux send-keys -t2 python3\ db.py\ cancelme Enter')
+        if os.name == 'posix':
+            print('Starting data stream on a linux/mac.')
+            subprocess.Popen(['nohup', 'python3', 'db.py', 'OPTIONHOOD'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif os.name == 'nt':
+            print('Starting data stream on Windows.')
+        else:
+            print('You are running Optionhood on an incompatible system. Please run on linux, OS X, or Windows.')
 
     def do_stop(self, args):
         """Stops data requests to Robinhood."""
-        os.system('pkill -f "python3 db.py cancelme"')
-        
+        #os.system('pkill -f "python3 db.py cancelme"')
+
+        if os.name == 'posix':
+            print('Stopping data stream on a linux/mac.')
+            subprocess.Popen(['pkill', '-f', 'python3 db.py OPTIONHOOD'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif os.name == 'nt':
+            print('Stopping data stream on Windows.')
+        else:
+            print('You are running Optionhood on an incompatible system. Please run on linux, OS X, or Windows.')
+
     def do_logout(self, args):
         """Deletes the current session."""
         try:
@@ -366,8 +379,6 @@ class OptionHoodCmd(cmd.Cmd):
 
 if __name__ == '__main__':
     rh.login(config.USERNAME, config.PASSWORD)
-    
-    os.system('tmux send-keys -t2 python3\ db.py\ cancelme Enter')
     
     prompt = OptionHoodCmd() 
     prompt.prompt = '> '

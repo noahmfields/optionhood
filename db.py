@@ -678,7 +678,7 @@ if __name__ == '__main__':
     print('Logged in!')
     print('Starting task runners...')
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         executor.submit(task_runner, task_name='update_account')
         executor.submit(task_runner, task_name='update_position_info')
         executor.submit(task_runner, task_name='update_spread_cap_ids')
