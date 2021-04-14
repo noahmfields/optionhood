@@ -3,6 +3,7 @@ import datetime
 import pytz
 import sys
 import os
+import concurrent.futures
 import time
 import config
 import robin_stocks.robinhood as rh
@@ -113,22 +114,27 @@ def recreate_account_table():
     create_account_table()
 
 def update_account():
+    # Robinhood request for buying power.
     buying_power = rh.profiles.load_account_profile()['buying_power']
+
+    # Robihood request for day trades.
     r = rh.account.get_day_trades()
     day_trades = len(r['option_day_trades']) + len(r['equity_day_trades'])
     
+    # Build equity expiration dates string.
     equity_expiries = ''
     for t in r['equity_day_trades']:
         equity_expiries = equity_expiries + t['expiry_date'].split('-')[2] + ' '
     
+    # Build options expiration dates string.
     option_expiries = ''
     for t in r['option_day_trades']:
         option_expiries = option_expiries + t['expiry_date'].split('-')[2] + ' '
     
     now = time.time()
+
     insert_data = (1, buying_power, day_trades, now, equity_expiries, option_expiries, buying_power, day_trades, now, equity_expiries, option_expiries)
 
-    #slate all records for deletion 
     con = db_connection()
     cur = con.cursor()
     
@@ -559,7 +565,6 @@ def update_spread_cap_ids():
     con.close()
     
 def update_long_position_market_data():
-
     #CONNECT TO DB
     con = db_connection()
     cur = con.cursor()
@@ -648,28 +653,49 @@ def set_positions_epoch_time(l_option_id, epoch_field):
     con.commit()
     cur.close()
     con.close()
-    
+
+def task_runner(task_name):
+    print('Running task_runner for ' + task_name)
+    home = os.path.expanduser('~')
+
+    while True:
+        if not os.path.exists(home + '/.tokens/robinhood.pickle'):
+            print("Exiting runners. Robinhood session not found. \nType 'login' in command window, \nand then 'start' to restart.")
+            sys.exit()
+
+        try:
+            exec(task_name + '()')
+        except:
+            print('Problem running task: ' + task_name)
+        time.sleep(config.RH_REQUEST_INTERVAL)
+
+
 if __name__ == '__main__':
     create_all_tables()
     rh.login(config.USERNAME, config.PASSWORD)
     home = os.path.expanduser('~')
 
-    while True:
-        if not os.path.exists(home + '/.tokens/robinhood.pickle'):
-            print("Exiting. Not logged in.")
-            sys.exit()
+    print('Logged in!')
+    print('Starting task runners...')
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        executor.submit(task_runner, task_name='update_account')
+        executor.submit(task_runner, task_name='update_position_info')
+        executor.submit(task_runner, task_name='update_spread_cap_ids')
+        executor.submit(task_runner, task_name='update_uncapped_shorts')
+        executor.submit(task_runner, task_name='update_long_position_market_data')
+        executor.submit(task_runner, task_name='update_short_position_market_data')
+        executor.submit(task_runner, task_name='update_underlying_market_data')
+        executor.submit(task_runner, task_name='update_orders')
+        executor.submit(task_runner, task_name='update_orders_market_data')
+        executor.submit(task_runner, task_name='update_instrument_data')
 
-        print("Updating account information at " + est_date_time_stamp() + ".")
-        update_account()
-        update_position_info()
-        update_spread_cap_ids()
-        update_uncapped_shorts()
-        update_long_position_market_data()
-        update_short_position_market_data()
-        update_underlying_market_data()
-        update_orders()
-        update_orders_market_data()
-        update_instrument_data()
+        while True:
+            print("Updating account information at " + est_date_time_stamp() + ".")
+            if not os.path.exists(home + '/.tokens/robinhood.pickle'):
+                print("Exiting runners from main script. Robinhood session not found. \nType 'login' in command window, \nand then 'start' to restart.")
+                sys.exit()
 
-        time.sleep(config.RH_REQUEST_INTERVAL)
-        
+            time.sleep(config.RH_REQUEST_INTERVAL)
+
+

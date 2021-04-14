@@ -136,11 +136,14 @@ class OptionHoodCmd(cmd.Cmd):
     def do_start(self, args):
         """Starts data requests from Robinhood. You will see this activity in the left bottom pane."""
         os.system('tmux send-keys -t2 C-c Enter')
-        os.system('tmux send-keys -t2 python3\ db.py Enter')
-        
+        os.system('tmux send-keys -t2 python3\ db.py\ cancelme Enter')
+        # START A PRCOESS FOR EACH DATA COLLECTION FUNCTION IN THE BAKCGOUND
+        # WITH THEIR OWN LOOPS
+        # 
+
     def do_stop(self, args):
         """Stops data requests to Robinhood."""
-        os.system('tmux send-keys -t2 C-c C-c C-c')
+        os.system('pkill -f "python3 db.py cancelme"')
         
     def do_logout(self, args):
         """Deletes the current session."""
@@ -364,7 +367,7 @@ class OptionHoodCmd(cmd.Cmd):
 if __name__ == '__main__':
     rh.login(config.USERNAME, config.PASSWORD)
     
-    os.system('tmux send-keys -t2 python3\ db.py Enter')
+    os.system('tmux send-keys -t2 python3\ db.py\ cancelme Enter')
     
     prompt = OptionHoodCmd() 
     prompt.prompt = '> '

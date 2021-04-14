@@ -1,0 +1,17 @@
+Updating account information at 2021-04-13 22:27:24.
+Updating account information at 2021-04-13 22:27:30.
+Updating account information at 2021-04-13 22:27:36.
+Updating account information at 2021-04-13 22:27:41.
+Updating account information at 2021-04-13 22:27:47.
+Traceback (most recent call last):
+  File "db.py", line 682, in <module>
+    futures.append(executor.submit(update_orders()))
+  File "db.py", line 149, in update_orders
+    res = rh.orders.get_all_open_option_orders()
+  File "/home/noah/optionhood/robin_stocks/robinhood/helper.py", line 33, in login_wrapper
+    return(func(*args, **kwargs))
+  File "/home/noah/optionhood/robin_stocks/robinhood/orders.py", line 86, in get_all_open_option_orders
+    data = [item for item in data if item['cancel_url'] is not None]
+  File "/home/noah/optionhood/robin_stocks/robinhood/orders.py", line 86, in <listcomp>
+    data = [item for item in data if item['cancel_url'] is not None]
+TypeError: 'NoneType' object is not subscriptable

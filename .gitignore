@@ -1,5 +1,6 @@
 /__pycache__/*
 /.ipynb_checkpoints/*
+/robin_stocks/*
 optionhood.sqlite3
 config.py
 .optionhood.sqlite3
