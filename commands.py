@@ -198,7 +198,7 @@ class OptionHoodCmd(cmd.Cmd):
 
     def do_exit(self, args):
         """Terminate optionhood tmux session. This stops all https requests to Robinhood. It does not erase the sqlite database and it does not log you out from your current session with Robinhood. You may restart Optionhood after without the need to login again, as long as your session hasn't expired."""
-        os.system('tmux kill-session -t optionhood')    
+        os.system('tmux kill-session -t 8a1822c8-10f3-4012-b368-1ea91cbc60fb')    
         return
 
     def do_buy(self, args):
