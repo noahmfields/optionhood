@@ -26,3 +26,6 @@ SUBMENU_PROMPT = '>>>> '
 
 # Project root directory.
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# UUID (do not edit)
+UUID = "3641b07b-f9e5-43c1-8b5e-aa8efbd9918c"
