@@ -140,7 +140,7 @@ class OptionHoodCmd(cmd.Cmd):
         #os.system('tmux send-keys -t2 python3\ db.py\ cancelme Enter')
         if os.name == 'posix':
             print('Starting data stream on a linux/mac.')
-            subprocess.Popen(['nohup', 'python3', 'db.py', 'OPTIONHOOD'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(['nohup', 'python3', 'db.py', config.UUID], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         elif os.name == 'nt':
             print('Starting data stream on Windows.')
         else:
@@ -152,7 +152,7 @@ class OptionHoodCmd(cmd.Cmd):
 
         if os.name == 'posix':
             print('Stopping data stream on a linux/mac.')
-            subprocess.Popen(['pkill', '-f', 'python3 db.py OPTIONHOOD'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(['pkill', '-f', 'python3 db.py ' + config.UUID], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         elif os.name == 'nt':
             print('Stopping data stream on Windows.')
         else:
